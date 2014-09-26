@@ -5,13 +5,13 @@ require 'active_support/inflector'
 
 class SQLObject
   def self.columns
-    result = DBConnection.execute2(<<-SQL)
+    DBConnection.execute2(<<-SQL)
       SELECT
-        *
+        #{self.table_name}.*
       FROM
-        #{table_name}
+        #{self.table_name}
     SQL
-    result.first.map(&:to_sym)
+    .first.map(&:to_sym)
   end
 
   def self.finalize!
@@ -35,11 +35,16 @@ class SQLObject
   end
 
   def self.all
-    # ...
+    self.parse_all(DBConnection.execute(<<-SQL))
+      SELECT
+        #{self.table_name}.*
+      FROM
+        #{self.table_name}
+    SQL
   end
 
   def self.parse_all(results)
-    # ...
+    results.map { |record| self.new(record)}
   end
 
   def self.find(id)
@@ -48,7 +53,7 @@ class SQLObject
 
   def initialize(params = {})
     params.each do |attr_name, value|
-      if self.class.columns.include?(attr_name)
+      if self.class.columns.include?(attr_name.to_sym)
         self.send("#{attr_name}=", value)
       else
         raise "unknown attribute '#{attr_name}'"
