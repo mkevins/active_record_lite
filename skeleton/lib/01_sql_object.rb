@@ -48,7 +48,14 @@ class SQLObject
   end
 
   def self.find(id)
-    # ...
+    self.parse_all(DBConnection.execute(<<-SQL, id)).first
+      SELECT
+        #{self.table_name}.*
+      FROM
+        #{self.table_name}
+      WHERE
+        #{self.table_name}.id = ?
+    SQL
   end
 
   def initialize(params = {})
