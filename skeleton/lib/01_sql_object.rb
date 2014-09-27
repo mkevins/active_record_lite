@@ -94,7 +94,18 @@ class SQLObject
   end
 
   def update
-    # ...
+    columns = self.class.columns
+    set_assignments = columns.map { |attr_name| "#{attr_name} = ?" }.join(", ")
+    question_marks = columns.map { "?" }.join(", ")
+
+    DBConnection.execute(<<-SQL, *self.attribute_values, self.id)
+      UPDATE
+        #{self.class.table_name}
+      SET
+        #{set_assignments}
+      WHERE
+        id = ?
+    SQL
   end
 
   def save
